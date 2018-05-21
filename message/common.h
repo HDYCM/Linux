@@ -7,7 +7,7 @@
 #include <string.h>
 
 #define PATHNAME "."
-#define PROJ_ID 0x6666
+#define PROJ_ID 1
 
 #define SERVER_TYPE 1
 #define CLIENT_TYPE 2
@@ -29,7 +29,7 @@ int MsgOpen();
 int MsgDestory(int msgid);
 
 //往消息队列中发送数据
-int MsqSend(int msgid, int type, char* buf, size_t size);
+int MsgSend(int msgid, int type, char* buf, size_t size);
 
 //从消息队列中接收数据
 int MsgRecv(int msgid, int type, char* buf, size_t max_size);
