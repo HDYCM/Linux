@@ -1,5 +1,6 @@
-#include "common.h"
 #include <stdio.h>
+#include <stddef.h>
+#include "common.h"
 
 int main(){
     int msgid = MsgCreate();
@@ -13,7 +14,7 @@ int main(){
         char input_buf[1024] = {0};
         printf("Please Enter：");
         fflush(stdout);
-        ssize_t read_size = read(0, input_buf, sizeof(input_buf) - 1);
+        ssize_t read_size = read(0, input_buf, sizeof(input_buf)-1);
         if(read_size < 0){
             perror("read error");
             return 1;

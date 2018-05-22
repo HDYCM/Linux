@@ -1,15 +1,15 @@
-#include "common.h"
 #include <stdio.h>
+#include <stddef.h>
+#include "common.h"
 
 int main(){
     int msgid = MsgOpen();
-    char buf[1024];
     while(1){
-        buf[0] = 0;
+        char buf[1024] = {0};
         printf("Please Enter：");
         fflush(stdout);
         //从标准输入读数据
-        ssize_t read_size = read(0, buf, sizeof(buf) - 1);
+        ssize_t read_size = read(0, buf, sizeof(buf)-1);
         if(read_size < 0){
             perror("read error");
             return 1;
