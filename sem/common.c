@@ -51,12 +51,30 @@ void SemGetValue(int semid, int index, int* value){
     *value = ret;
 }
 
+int CommonPV(int semid, int index, int op){
+    struct sembuf _sembuf;
+    _sembuf.sem_num = index;
+    _sembuf.sem_op = op;
+    _sembuf.sem_flg = 0;
+    int ret = semop(semid, &_sembuf, 1);
+    if(ret < 0){
+        perror("semop error");
+        return -1;
+    }
+    return 0;
+}
 
+void P(int semid, int index){
+    CommonPV(semid, index, -1);
+}
 
+void V(int semid, int index){
+    CommonPV(semid, index, 1);
+}
 //////////////////////////////////////////////////////////////////
 //以下是测试函数
 ///////////////////////////////////////////////////////////////////
-#if 1
+#if 0
 void TestCreate(){
     int semid = SemCreate(1);
     printf("semid = %d\n", semid);
@@ -79,13 +97,28 @@ void TestSetGet(){
     int value = 0;
     SemGetValue(semid, 0, &value);
     printf("value expect 1, actual %d\n", value);
+    SemDestroy(semid);
+}
+
+void TestPV(){
+    int semid = SemCreate(1);
+    SemSetValue(semid, 0, 1);
+    P(semid, 0);
+    int value = -1;
+    SemGetValue(semid, 0, &value);
+    printf("value expect 0, actual %d\n", value);
+    V(semid, 0);
+    SemGetValue(semid, 0, &value);
+    printf("value expect 1, actual %d\n", value);
+    SemDestroy(semid);
 }
 
 int main(){
     //TestCreate();
     //TestOpen();
     //TestDestroy();
-    TestSetGet();
+    //TestSetGet();
+    TestPV();
     return 0;
 }
 #endif

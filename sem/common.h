@@ -15,7 +15,7 @@ union semun {
 };
 
 //创建信号量集
-int SemCreate();
+int SemCreate(int nums);
 
 //打开信号量集
 int SemOpen();
@@ -33,7 +33,7 @@ void SemSetValue(int semid, int index, int value);
 void SemGetValue(int semid, int index, int* value);
 
 //P 操作
-int P(int semid, int index);
+void P(int semid, int index);
 
 //V 操作
-int V(int semid, int index);
+void V(int semid, int index);
