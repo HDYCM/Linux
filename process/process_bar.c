@@ -6,6 +6,7 @@ int main(){
     char buf[102] = {0};
     int i = 0;
     int j = 0;
+    //设置颜色
     int color[] = {1, 2, 3, 4, 5, 6, 7};
     const char* lable = "|/-\\";
     for(; i < 101; ++i){
