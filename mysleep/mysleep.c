@@ -22,6 +22,8 @@ void MySleep(int second){
 }
 
 int main(){
+    printf("before sleep...\n");
     MySleep(3);
+    printf("after sleep...\n");
     return 0;
 }
