@@ -5,12 +5,14 @@
 
 int main(){
     printf("father %d \n", getpid());
+    //创建第一个子进程
     int ret = fork();
     if(ret == 0){
         printf("child1 %d\n", getpid());
         sleep(3);
         exit(0);
     }
+    //创建第二个子进程
     ret = fork();
     if(ret == 0){
         printf("child2 %d\n", getpid());
