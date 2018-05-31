@@ -10,10 +10,12 @@ int main(){
         return 1;
     }
     else if(ret > 0){
+        //father
         printf("parent[%d] is sleeping...\n", getpid());
         sleep(30);
     }
     else{
+        //child
         printf("child[%d] is begin z...\n",getpid());
         sleep(5);
         exit(EXIT_SUCCESS);
