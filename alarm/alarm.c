@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <signal.h>
 
-void MyHandler(int sig){
+void MyHandler(int sig, uint64_t count){
     (void) sig;
     printf("count = %lu\n", count);
     exit(0);
