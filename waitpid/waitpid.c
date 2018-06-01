@@ -6,11 +6,13 @@
 int main(){
     printf("father %d \n", getpid());
     int ret = fork();
+    //第一个子进程
     if(ret == 0){
         printf("child1 %d\n", getpid());
         sleep(3);
         exit(0);
     }
+    //第二个子进程
     ret = fork();
     if(ret == 0){
         printf("child2 %d\n", getpid());
