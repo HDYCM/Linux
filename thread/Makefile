@@ -1,6 +1,6 @@
-main:./main.c
+cpu:./cpu.c
 	gcc $^ -o $@ -lpthread
 
 .PHONY:clean
 clean:
-	rm main
+	rm cpu
