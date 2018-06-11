@@ -3,7 +3,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 
-#if 1
+#if 0
 pthread_mutex_t g_lock;
 pthread_cond_t g_cond;
 
@@ -77,6 +77,8 @@ void* Consume(void* arg){
     int count = -1;
     while(1){
         pthread_mutex_lock(&g_lock);
+        //pthread_cond_wait 有可能被信号打断
+        //当我们的pthread_cond_wait返回的时候，再次判断条件是否就绪
         while(g_head.next == NULL){
             pthread_cond_wait(&g_cond, &g_lock);
         }
@@ -103,10 +105,10 @@ int main(){
 }
 #endif
 
-#if 0
+#if 1
 ////////////////////////////////////////////////////////////
-//
-//
+//基于信号量实现生产者消费者模型
+//POSIX版本的信号量
 ////////////////////////////////////////////////////////////
 #include <semaphore.h>
 
@@ -114,6 +116,8 @@ sem_t g_lock;
 sem_t g_data;
 sem_t g_blank;
 
+//先实现一个交易场所
+//使用数组实现一个队列
 #define SIZE 1024
 typedef struct Queue{
     int array[SIZE];
@@ -162,6 +166,7 @@ void* Product(void* arg){
         printf("Product %d\n", count);
         sem_post(&g_lock);
 
+        usleep(789123);
         sem_post(&g_data);
     }
     return NULL;
@@ -178,12 +183,13 @@ void* Consume(void* arg){
         printf("Consume %d\n", count);
         sem_post(&g_lock);
 
-        sem_post(&g_blank);
         usleep(123456);
+        sem_post(&g_blank);
     }
     return NULL;
 }
 
+//再实现三种关系
 int main(){
     Init(&g_queue);
     sem_init(&g_lock, 0, 1);
