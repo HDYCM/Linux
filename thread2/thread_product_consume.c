@@ -203,6 +203,7 @@ int main(){
     sem_destroy(&g_lock);
     sem_destroy(&g_data);
     sem_destroy(&g_blank);
+    return 0;
 }
 
 #endif
