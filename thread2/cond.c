@@ -10,8 +10,8 @@ void* Pass(void* arg){
     (void)arg;
     while(1){
         printf("传球！\n");
-        usleep(123456);
-        pthread_cond_wait(&cond, &lock);
+        pthread_cond_signal(&cond);
+        usleep(789123);
     }
     return NULL;
 }
@@ -19,9 +19,9 @@ void* Pass(void* arg){
 void* Shot(void* arg){
     (void)arg;
     while(1){
-        pthread_cond_signal(&cond);
+        pthread_cond_wait(&cond, &lock);
         printf("投篮！\n");
-        usleep(789123);
+        usleep(123456);
     }
     return NULL;
 }
