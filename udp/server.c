@@ -14,6 +14,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <string.h>
 
 typedef struct sockaddr sockaddr;
 typedef struct sockaddr_in sockaddr_in;
@@ -38,12 +39,31 @@ int main(int argc, char* argv[]){
     addr.sin_family = AF_INET;
     //点分十进制的字符串ip地址转换成数字（网络字节序）
     addr.sin_addr.s_addr = inet_addr(argv[1]);
-    addr.sin_port = htos(atoi(argv[2]));
+    addr.sin_port = htons(atoi(argv[2]));
     int ret = bind(fd, (sockaddr*)&addr, sizeof(addr));
     if(ret < 0){
         perror("bind");
         return 1;
     }
+    //2.进入死循环
+    while(1){
+        //a)读取请求
+        struct sockaddr_in peer;
+        socklen_t len = sizeof(peer);
+        char buf[1024] = {0};
+        ssize_t read_size = recvfrom(fd, buf, sizeof(buf) - 1, 0, (sockaddr*)&peer, &len);
+        if(read_size < 0){
+            perror("recvfrom");
+            continue;
+        }
+        buf[read_size] = '\0';
+        //b)根据请求进行计算(此处由于实现的是echo_server,所以省略这一步)
+        printf("[client %s:%d] say:%s\n", inet_ntoa(peer.sin_addr), ntohs(peer.sin_port), buf);
+        //c)把响应结果写回到socket
+        //缓冲区长度最好不要写成sizeof,由于我们传输数据只传输有效部分就可以了
+        sendto(fd, buf, strlen(buf), 0, (sockaddr*)&peer, sizeof(peer));
+    }
+    close(fd);
     return 0;
 }
 
