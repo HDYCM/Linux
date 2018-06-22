@@ -1,5 +1,5 @@
 thread:./thread.c
-	gcc $^ -o $@ -lpthread
+	gcc -g $^ -o $@ -lpthread
 
 .PHONY:clean
 clean:
