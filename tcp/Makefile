@@ -1,5 +1,11 @@
 .PHONY:all
-all:server client
+all:server client server_thread server_fork
+
+server_fork:./server_fork.c
+	gcc $^ -o $@ 
+
+server_thread:./server_thread.c
+	gcc $^ -o $@ -lpthread
 
 server:./server.c
 	gcc $^ -o $@ 
@@ -9,4 +15,4 @@ client:./client.c
 
 .PHONY:clean
 clean:
-	rm server client
+	rm server client server_thread server_fork

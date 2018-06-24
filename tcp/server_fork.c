@@ -8,17 +8,38 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/wait.h>
 #include <sys/socket.h>
+#include <signal.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 typedef struct sockaddr sockaddr;
 typedef struct sockaddr_in sockaddr_in;
 
-void ProcessConnect(int new_sock){
+void ProcessConnect(int new_sock, sockaddr_in* peer){
+    ////////////////////////////////////////////////////////////
+    //在这个函数中进行创建子进程来处理客户端的请求
+    ////////////////////////////////////////////////////////////
     //完成一次连接的处理
     //需要循环的来处理客户端发送的数据
     while(1){
+        int ret = fork();
+        if(ret < 0){
+            perror("fork");
+            return;
+        }
+        if(ret > 0){
+            //父进程
+            //此处一定要考虑到僵尸进程的问题
+            //此处使用wait和waitpid都是不行的
+            //比较简单的方案就是忽略SIGCHLD信号
+            signal(SIGCHLD, SIG_IGN);
+            //此处还需要注意！！！
+            //文件描述符需要父子进程都关闭
+            close(new_sock);
+            return;
+        }
         //子进程
         //a)从客户端读取数据
         char buf[1024] = {0};
@@ -29,13 +50,18 @@ void ProcessConnect(int new_sock){
         }
         if(read_size == 0){
             //TCP中，如果read的返回值是0，说明对端关闭了连接
-            printf("[client %d] disconnect!\n", new_sock);
+            printf("[client %s:%d] disconnect!\n", inet_ntoa(peer->sin_addr), ntohs(peer->sin_port));
             close(new_sock);
-            return;
+            //此处需要注意！！！
+            //不能直接让函数返回，而是让子进程直接退出
+            //如果是函数返回，子进程接下来也会尝试进行 accept
+            //这样的动作是没有必要的，父进程已经负责了 accept
+            //子进程只要做好自己的事情，把对应的客户端服务好就可以了
+            exit(0);
         }
         buf[read_size] = '\0';
         //b)根据请求计算响应(省略)
-        printf("[client %d] %s\n", new_sock, buf);
+        printf("[client %s:%d] %s\n", inet_ntoa(peer->sin_addr), ntohs(peer->sin_port),  buf);
         //c)把响应写回到客户端
         write(new_sock, buf, strlen(buf));
     }
@@ -80,8 +106,8 @@ int main(int argc, char* argv[]){
             perror("accept");
             continue;
         }
-        printf("[client %d] connect!\n", new_sock);
-        ProcessConnect(new_sock);
+        printf("[client %s:%d] connect!\n", inet_ntoa(peer.sin_addr), ntohs(peer.sin_port));
+        ProcessConnect(new_sock, &peer);
     }
     return 0;
 }

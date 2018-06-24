@@ -11,13 +11,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <pthread.h>
 
 typedef struct sockaddr sockaddr;
 typedef struct sockaddr_in sockaddr_in;
 
-void ProcessConnect(int new_sock){
-    //完成一次连接的处理
-    //需要循环的来处理客户端发送的数据
+void* ThreadEntry(void* arg){
+    int64_t new_sock = (int64_t)arg;
     while(1){
         //子进程
         //a)从客户端读取数据
@@ -29,16 +29,28 @@ void ProcessConnect(int new_sock){
         }
         if(read_size == 0){
             //TCP中，如果read的返回值是0，说明对端关闭了连接
-            printf("[client %d] disconnect!\n", new_sock);
+            printf("[client %lu] disconnect!\n", new_sock);
             close(new_sock);
-            return;
+            return NULL;
         }
         buf[read_size] = '\0';
         //b)根据请求计算响应(省略)
-        printf("[client %d] %s\n", new_sock, buf);
+        printf("[client %lu] %s\n", new_sock, buf);
         //c)把响应写回到客户端
         write(new_sock, buf, strlen(buf));
     }
+    return NULL;
+}
+
+void ProcessConnect(int64_t new_sock){
+    //////////////////////////////////////////////////////
+    //此处需要创建线程来完成和客户端的交互
+    //////////////////////////////////////////////////////
+    //完成一次连接的处理
+    //需要循环的来处理客户端发送的数据
+    pthread_t tid;
+    pthread_create(&tid, NULL, ThreadEntry, (void*)new_sock);
+    pthread_detach(tid);
 }
 
 //./server [ip] [port]
