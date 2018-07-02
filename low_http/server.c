@@ -11,7 +11,7 @@ typedef struct sockaddr_in sockaddr_in;
 
 void PackageResponse(char http_resp[]){
     int cur_len = 0;
-    const char* html = "<html>hello</html>";
+    const char* html = "<html><h2>hello</h2></html>";
     cur_len += sprintf(http_resp, "HTTP/1.1 200 OK\n");
     cur_len += sprintf(http_resp + cur_len, "Content-Length: %lu\n",strlen(html));
     cur_len += sprintf(http_resp + cur_len, "\n");
