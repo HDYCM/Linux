@@ -1,5 +1,5 @@
 .PHONY:clean
-OBJ = tetris.o def.o
+OBJ = tetris.o def.o keyboard.o
 
 cc = gcc
 CFLAGS = -Wall -g
