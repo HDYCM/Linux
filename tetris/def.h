@@ -1,7 +1,7 @@
 #pragma once
 
 #define FC 5
-#define BC 8
+#define BC 7
 
 #define W 10
 #define H 20

@@ -90,10 +90,10 @@ void set_back(struct data* p, struct shape shp){
 //消行
 void clean_line(){
     int i = 0;
-    for(; i < 5; ++i){
+    for(; i < H; ++i){
         int t = 0;
         int j = 0;
-        for(j = 0; j < 5; ++j){
+        for(j = 0; j < W; ++j){
             if(background[i][j] != 0){
                 ++t;
             }
@@ -174,8 +174,8 @@ int tetris(struct data* p){
     int c = get_key();
     if(is_up(c)){
         draw_shape(p->x, p->y, shape_arr[cur], BC);
-        shape_arr[0] = turn_90(shape_arr[cur]);
-        if(can_move(p->x, p->y, shape_arr[cur])){
+        shape_arr[cur] = turn_90(shape_arr[cur]);
+        if(can_move(p->x, p->y, shape_arr[cur]) == 0){
             shape_arr[cur] = turn_90(shape_arr[cur]);
             shape_arr[cur] = turn_90(shape_arr[cur]);
             shape_arr[cur] = turn_90(shape_arr[cur]);
