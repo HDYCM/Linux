@@ -12,9 +12,23 @@
 #include <sys/sendfile.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <pthread.h>
 
 typedef struct sockaddr sockaddr;
 typedef struct sockaddr_in sockaddr_in;
+
+#define SIZE (1024 * 4)
+
+typedef struct HttpRequest{
+    char first_line[SIZE];
+    char* method;
+    char* url;
+    char* url_path;
+    char* query_string;
+    int content_length;
+}HttpRequest;
+
+
 
 //url 形如：/index.html?a=10&b=20
 //          http://www.baidu.com/index.html?a=10&b=20(暂时不考虑)
@@ -164,12 +178,54 @@ void HandlerRequest(int64_t new_sock){
         err_code = 404;
         goto END;
     }
-
+    printf("first_line: %s\n", req.first_line);
+    // b)解析首行，获取到 url 和 method
+    if(ParseFirstLine(req.first_line, &req.method, &req.url) < 0){
+        //错误处理
+        err_code = 404;
+        goto END;
+    }
+    // c)解析url，获取到 url_path 和 query_string
+    if(ParseUrl(req.url, &req.url_path, &req.query_string) < 0){
+        //错误处理
+        err_code = 404;
+        goto END;
+    }
+    // d)解析header，丢弃大部分 header ，只保留 Content-Length
+    if(ParseHeader(new_sock, &req.content_length)){
+        //错误处理
+        err_code = 404;
+        goto END;
+    }
+    //2.根据请求计算响应并写回到客户端
+    //GET, Get, gET 多种形式
+    if(strcasecmp(req.method, "GET") == 0 && req.query_string == NULL){
+        // a)处理静态页面
+        HandlerStaticFile(new_sock, &req);
+    }
+    else if(strcasecmp(req.method, "GET") == 0 && req.query_string != NULL){
+        // b)处理动态页面
+        HandlerCGI();
+    }
+    else if(strcasecmp(req.method, "POST") == 0){
+        // b)处理动态页面
+        HandlerCGI();
+    }
+    else{
+        //错误处理
+    }
 END:
     //收尾工作, 主动关闭 socket，会进入
     if(err_code == 404){
         Handler404(new_sock);
     }
+    close(new_sock);
+}
+
+void* ThreadEntry(void* arg){
+    int64_t new_sock = (int64_t)arg;
+    HandlerRequest(new_sock);
+    return NULL;
 }
 
 void HttpServerStart(const char* ip, short port){
@@ -179,6 +235,11 @@ void HttpServerStart(const char* ip, short port){
         perror("socket");
         return;
     }
+
+    //设置一个选项 REUSEADDR
+    int opt = 1;
+    setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
     sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = inet_addr(ip);
@@ -188,8 +249,27 @@ void HttpServerStart(const char* ip, short port){
         perror("bind");
         return;
     }
+    ret = listen(listen_sock, 5);
+    if(ret < 0){
+        perror("listen");
+        return;
+    }
+    printf("HttpServer start OK\n");
     //2.进入事件循环
-    
+    while(1){
+        //此处实现一个多线程版本的服务器
+        //每个请求都创建一个新的线程
+        sockaddr_in peer;
+        socklen_t len = sizeof(peer);
+        int new_sock = accept(listen_sock, (sockaddr*)&peer, &len);
+        if(new_sock < 0){
+            perror("accept");
+            continue;
+        }
+        pthread_t tid;
+        pthread_create(&tid, NULL, ThreadEntry, (void*)new_sock);
+        pthread_detach(tid);
+    }
 }
 
 int main(int argc, char* argv[]){
