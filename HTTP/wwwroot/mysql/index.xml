@@ -1,0 +1,12 @@
+<head><meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"></meta></head>
+<html>
+    <form action="math">
+        id:<br>
+        <input type="text" name="id">
+        <br>
+        name:<br>
+        <input type="test" name="name">
+            <br><br>
+        <input type="submit" value="insert">
+    </form>
+</html>
