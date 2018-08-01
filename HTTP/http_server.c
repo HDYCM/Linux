@@ -29,7 +29,80 @@ typedef struct HttpRequest{
     int content_length;
 }HttpRequest;
 
+//从 socket 中读取到一行数据
+//HTTP 请求中换行符究竟是什么？
+//\n \r \r\n 都可以进行处理
+//核心思路：把未知问题转换为已知问题，把 \r \r\n 往 \n 转换
+ssize_t ReadLine(int sock, char output[], ssize_t max_size){
+    //1.一个字符一个字符的从 socket 中读取数据
+    char c = '\0';
+    ssize_t i = 0;
+    while(i < max_size){
+        ssize_t read_size = recv(sock, &c, 1, 0);
+        if(read_size <= 0){
+            //由于此处是希望能读到一个完整的行，如果还没读到换行
+            //就读到了 EOF，此时就认为出错了
+            return -1;
+        }
+        //2.判定当前字符是不是 \r
+        //3.如果当前字符是\r，就尝试读取下一个字符
+        if(c == '\r'){
+            //相当于偷看牌
+            recv(sock, &c, 1, MSG_PEEK);
+            if(c == '\n'){
+                //  a)如果下一个字符是 \n
+                //    就真正的摸牌
+                //    \r\n => \n
+                recv(sock, &c, 1, 0);
+            }
+            else{
+                //  b)如果下一个字符不是 \n
+                //    \r => \n
+                c = '\n';
+            }
+            //针对这两种情况，都把当前字符转换为 \n
+        }
+        //此时无论分割是什么，c都变成了 \n
+        //4.如果当前字符是 \n 直接结束函数(表示这一行已经读完了)
+        if(c == '\n'){
+            break;
+        }
+        //5.如果当前字符是一个普通字符，直接追加到输出结果中
+        output[i++] = c;
+    }
+    output[i] = '\0';
+    return i;
+}
 
+//进行字符串切分
+int Split(char input[], const char* split_char, char* output[]){
+    int output_index = 0;
+    char* tmp = NULL;
+    char* p = strtok_r(input, split_char, &tmp);    //strtok_r是线程安全版
+    while(p != NULL){
+        output[output_index++] = p;
+        p = strtok_r(NULL, split_char, &tmp);
+    }
+    return output_index;
+}
+
+//解析首行，获取到其中的 method 和 url
+//首行格式形如：
+//  暂时先不考虑带域名的情况的url(此处是偷懒的做法)
+//  GET /index.html?a=10&b=20 HTTP/1.1
+int ParseFirstLine(char first_line[], char** p_method, char** p_url){
+    char* tok[10] = {0};
+    //使用 Split 函数对字符串进行切分，n表示切分结果有几个部分
+    int n = Split(first_line, " ", tok);
+    if(n != 3){
+        printf("Split failed! n=%d\n", n);
+        return -1;
+    }
+    //TODO 此处还可以进行更复杂的校验
+    *p_method = tok[0];
+    *p_url = tok[1];
+    return 0;
+}
 
 //url 形如：/index.html?a=10&b=20
 //          http://www.baidu.com/index.html?a=10&b=20(暂时不考虑)
@@ -402,6 +475,7 @@ int main(int argc, char* argv[]){
         printf("Usage ./http_server [ip] [port]\n");
         return 1;
     }
+    signal(SIGPIPE, SIG_IGN);
     signal(SIGCHLD, SIG_IGN);
     HttpServerStart(argv[1], atoi(argv[2]));
     return 0;
