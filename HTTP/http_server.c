@@ -168,7 +168,7 @@ int IsDir(const char* file_path){
     }
 }
 
-void HandlerFilePath(const char* url_path, char file_path){
+void HandlerFilePath(const char* url_path, char file_path[]){
     //url_path 是以 / 开头的，所以不需要 wwwroot 之后显示指明 /
     sprintf(file_path, "./wwwroot%s", url_path);
     //如果 url_path 指向的是目录，就在目录后面拼接上 index.html 作为默认访问文件
@@ -335,7 +335,11 @@ int HandlerCGI(int new_sock, const HttpRequest* req){
         //father
         //此处先把不必要的文件描述符关闭掉
         //为了保证后面父进程从管道中读取数据的时候，read 能够正确返回不阻塞
-        //
+        //后面的代码中会循环从管道中读数据，读到EOF就认为读完了，循环退出
+        //而对于管道来说，必须所有的写端关闭，再进行读，才是读到EOF
+        //而这里所有的写端包含父进程的写端和子进程的写端
+        //子进程的写端会随着子进程的终止而自动关闭
+        //父进程的写端，就可以在此处，直接关闭.(反正父进程自己也不需要使用这个写端)
         close(child_read);
         close(child_write);
         HandlerCGIFather(req, new_sock, father_read, father_write);
@@ -399,22 +403,25 @@ void HandlerRequest(int64_t new_sock){
     //GET, Get, gET 多种形式
     if(strcasecmp(req.method, "GET") == 0 && req.query_string == NULL){
         // a)处理静态页面
-        HandlerStaticFile(new_sock, &req);
+        err_code = HandlerStaticFile(new_sock, &req);
     }
     else if(strcasecmp(req.method, "GET") == 0 && req.query_string != NULL){
         // b)处理动态页面
-        HandlerCGI(new_sock, &req);
+        err_code = HandlerCGI(new_sock, &req);
     }
     else if(strcasecmp(req.method, "POST") == 0){
         // b)处理动态页面
-        HandlerCGI(new_sock, &req);
+        err_code = HandlerCGI(new_sock, &req);
     }
     else{
         //错误处理
+        err_code = 404;
+        goto END;
     }
 END:
-    //收尾工作, 主动关闭 socket，会进入
-    if(err_code == 404){
+    //收尾工作, 主动关闭 socket，会进入 TIME_WAIT 状态
+    if(err_code != 200){
+        printf("err_code = %d\n", err_code);
         Handler404(new_sock);
     }
     close(new_sock);
