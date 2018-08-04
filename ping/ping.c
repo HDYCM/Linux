@@ -2,13 +2,14 @@
 #include <sys/time.h>
 #include <netdb.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <stdlib.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <arpa/inet.h>
 #include <string.h>
-#include <stdlib.h>
+#include <signal.h>
 #include <unistd.h>
 
 #define BUF_SZ 1024
@@ -19,6 +20,14 @@ int recvnum = 0;
 char sendpack[BUF_SZ];
 char recvpack[BUF_SZ];
 struct sockaddr_in from;
+
+void Handler(int sig){
+    (void)sig;
+    printf("--- www.a.shifen.com ping statistics ---\n");
+    printf("%d packets transmitted, %d received, %.3f%% packet loss.\n", sendnum, recvnum, ((sendnum - recvnum) / sendnum) * 100);
+
+    exit(0);
+}
 
 //两个时间相差多少毫秒
 long diftime(const struct timeval* end, const struct timeval* begin){
@@ -33,7 +42,7 @@ unsigned short chksum(unsigned short* addr, int len){
         len -=2;
     }
     if(len == 1){
-        ret += *(unsigned char*)addr;
+        ret += *(char*)addr;
     }
     ret = (ret >> 16) + (ret & 0xffff);
     ret = ret + (ret >> 16);
@@ -71,7 +80,7 @@ void unpack(char* buf, int len, pid_t pid){
     struct icmp* picmp = (struct icmp*)(buf + (pip->ip_hl << 2));
     struct timeval end;
     gettimeofday(&end, NULL);
-    printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%d ms\n", 
+    printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%ld ms\n", 
                PACK_LEN, inet_ntoa(from.sin_addr), picmp->icmp_seq, pip->ip_ttl, diftime(&end, (struct timeval*)(picmp->icmp_data)));
 }
 
@@ -109,6 +118,7 @@ int main(int argc, char* argv[]){
         exit(1);
     }
 
+    signal(SIGINT, Handler);
     ad.sin_family = AF_FILE;
     ad.sin_addr = addr;
     pid_t pid = getpid();
