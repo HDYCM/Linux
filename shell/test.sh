@@ -17,11 +17,11 @@ else
     fi
 fi
 
-#read x
+read x
 # -eq相等 -ne不相等 -lt -gt -le -ge
-#test $x -eq 100
-#y=100
-#[ $x -eq 100 -a $y -eq 100 ]
+test $x -eq 100
+y=100
+[ $x -eq 100 -a $y -eq 100 ]
 
 #read str
 ##test "X$str" == "Xaaa"
