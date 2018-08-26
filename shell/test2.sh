@@ -1,10 +1,35 @@
-#!/bin/sh
+#!/bin/zsh
 
-read file
-while read line
-do 
-    echo hello:$line
-done<$filename>$filename.bak 
+source api.sh
+read d1 d2 
+ 
+res=$(intAdd $d1 $d2) 
+ 
+echo $res
+
+#trap 'echo hello world; trap 2' 2     #捕捉信号并恢复默认
+#while :
+#do
+#    :
+#done
+
+#src=$(ls *.c)
+#cc=gcc
+#bin=mytest
+#
+#cat<<EOF >Makefile
+#$bin:$src
+#    $cc -o \$@ \$^
+#.PHONY:clean
+#clean:
+#    rm -f $bin
+#EOF
+
+#read file
+#while read line
+#do 
+#    echo hello:$line
+#done<$filename>$filename.bak 
 #i=0
 #while [ $i -le 10 ]
 #do 
