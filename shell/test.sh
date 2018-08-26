@@ -33,6 +33,7 @@ y=100
 #read file
 #[ -c $file ]   #判断文件是否是字符设备
 #[ -d $file ]   #判断是否是目录
+#[ -f $file ]   #判断是否是文件
 #echo $?
 
 ##myDate=`date +%Y.%m.%d`
